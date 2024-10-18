@@ -31,7 +31,7 @@ const ListComplaint = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredComplaints, setFilteredComplaints] = useState([]);
-  const [categories] = useState([]);
+  const [categories, setCategories] = useState([]); // Perbarui di sini
   const [selectedCategory, setSelectedCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -51,31 +51,31 @@ const ListComplaint = () => {
       const complaintsResponse = await axios.get("http://localhost:3000/complaints", {
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       });
-  
+
       const categoriesResponse = await axios.get("http://localhost:3000/categories", {
         headers: {
           "Content-Type": "application/json",
         },
       });
-  
+
       console.log("Complaints Response:", complaintsResponse.data); // Log response complaints
       console.log("Categories Response:", categoriesResponse.data); // Log response categories
-  
-      // Menggunakan langsung response data sebagai array
-      const complaintsData = Array.isArray(complaintsResponse.data) ? complaintsResponse.data : [];
-      const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-  
+
+      const complaintsData = Array.isArray(complaintsResponse.data.values) ? complaintsResponse.data.values : [];
+      const categoriesData = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []; // Periksa respons di sini
+
       const complaintsWithCategoryName = complaintsData.map((complaint) => {
-        const category = categoriesData.find((cat) => cat.id === complaint.category_id);
+        const category = categoriesData.find((cat) => cat.id === Number(complaint.category_id)); // Pastikan perbandingan tipe data
         return {
           ...complaint,
           categoryName: category ? category.name : "Kategori Tidak Ditemukan",
         };
       });
-  
+
       setComplaints(complaintsWithCategoryName);
+      setCategories(categoriesData);
     } catch (error) {
       console.error("Error fetching complaints:", error);
       setError(error.message);
@@ -83,18 +83,19 @@ const ListComplaint = () => {
       setLoading(false);
     }
   };
-  
+
+
 
   const filterComplaints = () => {
     const filtered = complaints.filter((complaint) => {
       const formattedDate = format(new Date(complaint.updated_at), "d MMMM yyyy", { locale: id }).toLowerCase();
       return (
-        (complaint.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          complaint.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          formattedDate.includes(searchTerm.toLowerCase()) ||
-          complaint.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          complaint.type.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (selectedCategory === "" || complaint.categoryName === selectedCategory)
+          (complaint.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+              complaint.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              formattedDate.includes(searchTerm.toLowerCase()) ||
+              complaint.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              complaint.type.toLowerCase().includes(searchTerm.toLowerCase())) &&
+          (selectedCategory === "" || complaint.categoryName === selectedCategory)
       );
     });
     setFilteredComplaints(filtered);
@@ -141,160 +142,160 @@ const ListComplaint = () => {
 
   if (loading) {
     return (
-      <section className="flex w-full flex-col">
-        <HeaderLayout />
-        <SidebarLayout />
-        <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto">
-          <main className="container mx-auto px-4 py-4">
-            <CircularProgress color="primary" />
-          </main>
-        </div>
-      </section>
+        <section className="flex w-full flex-col">
+          <HeaderLayout />
+          <SidebarLayout />
+          <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto">
+            <main className="container mx-auto px-4 py-4">
+              <CircularProgress color="primary" />
+            </main>
+          </div>
+        </section>
     );
   }
 
   if (error) {
     return (
-      <section className="flex w-full flex-col">
-        <HeaderLayout />
-        <SidebarLayout />
-        <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto">
-          <main className="container mx-auto px-4 py-4">
-            <p>There was an error: {error}</p>
-          </main>
-        </div>
-      </section>
+        <section className="flex w-full flex-col">
+          <HeaderLayout />
+          <SidebarLayout />
+          <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto">
+            <main className="container mx-auto px-4 py-4">
+              <p>There was an error: {error}</p>
+            </main>
+          </div>
+        </section>
     );
   }
 
   return (
-    <section className="flex w-full flex-col bg-light-1">
-      <HeaderLayout />
-      <SidebarLayout />
-      <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto bg-light-1">
-        <main className="container mx-auto py-2">
-          <section className="flex flex-col items-start mb-4 text-left">
-            <h1 className="text-3xl font-bold">Kelola Complaint</h1>
-          </section>
+      <section className="flex w-full flex-col bg-light-1">
+        <HeaderLayout />
+        <SidebarLayout />
+        <div className="lg:ml-80 py-3 px-2 min-h-[80dvh] overflow-y-auto bg-light-1">
+          <main className="container mx-auto py-2">
+            <section className="flex flex-col items-start mb-4 text-left">
+              <h1 className="text-3xl font-bold">Kelola Complaint</h1>
+            </section>
 
-          <Box p={2} sx={{ backgroundColor: "#E2E2E2" }}>
-            <div className="flex items-center justify-end mb-4 space-x-2">
-              <TextField
-                variant="outlined"
-                placeholder="Kata kunci atau tracking ID"
-                value={searchTerm}
-                onChange={handleSearch}
-                InputProps={{
-                  startAdornment: (
-                    <IconButton>
-                      <Search />
-                    </IconButton>
-                  ),
-                  sx: {
-                    backgroundColor: "white",
-                    borderRadius: "0.5rem",
-                  },
-                }}
-                sx={{
-                  width: "400px",
-                }}
-              />
-              <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel id="category-select-label">Filter</InputLabel>
-                <Select
-                  labelId="category-select-label"
-                  id="category-select"
-                  value={selectedCategory}
-                  onChange={handleCategoryChange}
-                  label="Filter"
-                  sx={{
-                    borderRadius: "0.5rem",
-                    backgroundColor: "white",
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Semua</em>
-                  </MenuItem>
-                  {categories.map((category, index) => (
-                    <MenuItem key={index} value={category}>
-                      {category}
+            <Box p={2} sx={{ backgroundColor: "#E2E2E2" }}>
+              <div className="flex items-center justify-end mb-4 space-x-2">
+                <TextField
+                    variant="outlined"
+                    placeholder="Kata kunci atau tracking ID"
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    InputProps={{
+                      startAdornment: (
+                          <IconButton>
+                            <Search />
+                          </IconButton>
+                      ),
+                      sx: {
+                        backgroundColor: "white",
+                        borderRadius: "0.5rem",
+                      },
+                    }}
+                    sx={{
+                      width: "400px",
+                    }}
+                />
+                <FormControl sx={{ minWidth: 150 }}>
+                  <InputLabel id="category-select-label">Filter</InputLabel>
+                  <Select
+                      labelId="category-select-label"
+                      id="category-select"
+                      value={selectedCategory}
+                      onChange={handleCategoryChange}
+                      label="Filter"
+                      sx={{
+                        borderRadius: "0.5rem",
+                        backgroundColor: "white",
+                      }}
+                  >
+                    <MenuItem value="">
+                      <em>Semua</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <TableContainer
-              component={Paper}
-              className="font-poppins"
-              sx={{ backgroundColor: "#E5E7EB" }}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow className="bg-main-color">
-                    <TableCell align="center">No</TableCell>
-                    <TableCell>No. Complaint</TableCell>
-                    <TableCell align="center">Tanggal</TableCell>
-                    <TableCell align="center">Lokasi</TableCell>
-                    <TableCell align="center">Kategori</TableCell>
-                    <TableCell align="center">Tipe</TableCell>
-                    <TableCell align="center">Status</TableCell>
-                    <TableCell align="center">Detail</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredComplaints
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((complaint, index) => (
-                      <TableRow key={complaint.id}>
-                        <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{complaint.id}</TableCell>
-                        <TableCell align="center">
-                          {format(new Date(complaint.updated_at), "d MMMM yyyy", { locale: id })}
-                        </TableCell>
-                        <TableCell>{complaint.address}</TableCell>
-                        <TableCell align="center">
+                    {categories.map((category) => ( // Pastikan untuk menggunakan category.id dan category.name
+                        <MenuItem key={category.id} value={category.name}>
+                          {category.name}
+                        </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <TableContainer
+                  component={Paper}
+                  className="font-poppins"
+                  sx={{ backgroundColor: "#E5E7EB" }}
+              >
+                <Table>
+                  <TableHead>
+                    <TableRow className="bg-main-color">
+                      <TableCell align="center">No</TableCell>
+                      <TableCell>No. Complaint</TableCell>
+                      <TableCell align="center">Tanggal</TableCell>
+                      <TableCell align="center">Lokasi</TableCell>
+                      <TableCell align="center">Kategori</TableCell>
+                      <TableCell align="center">Tipe</TableCell>
+                      <TableCell align="center">Status</TableCell>
+                      <TableCell align="center">Detail</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredComplaints
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((complaint, index) => (
+                            <TableRow key={complaint.id}>
+                              <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
+                              <TableCell>{complaint.id}</TableCell>
+                              <TableCell align="center">
+                                {format(new Date(complaint.updated_at), "d MMMM yyyy", { locale: id })}
+                              </TableCell>
+                              <TableCell>{complaint.address}</TableCell>
+                              <TableCell align="center">
                           <span className="bg-light-4 px-3 py-2">
                             {complaint.categoryName} {/* Nama kategori */}
                           </span>
-                        </TableCell>
-                        <TableCell align="center">
+                              </TableCell>
+                              <TableCell align="center">
                           <span className="bg-light-4 px-3 py-2">
                             {complaint.type}
                           </span>
-                        </TableCell>
-                        <TableCell align="center">
+                              </TableCell>
+                              <TableCell align="center">
                           <span
-                            className={`px-3 py-2 text-light-4 ${getStatusColor(complaint.status)}`}
+                              className={`px-3 py-2 text-light-4 ${getStatusColor(complaint.status)}`}
                           >
                             {complaint.status}
                           </span>
-                        </TableCell>
-                        <TableCell align="center">
-                          <button
-                            onClick={() => handleDetailClick(complaint.id)}
-                            className="bg-info-3 text-white px-3 py-2 rounded"
-                          >
-                            Detail
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={filteredComplaints.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </Box>
-        </main>
-      </div>
-    </section>
+                              </TableCell>
+                              <TableCell align="center">
+                                <button
+                                    onClick={() => handleDetailClick(complaint.id)}
+                                    className="bg-info-3 text-white px-3 py-2 rounded"
+                                >
+                                  Detail
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                        ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  component="div"
+                  count={filteredComplaints.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Box>
+          </main>
+        </div>
+      </section>
   );
 };
 
