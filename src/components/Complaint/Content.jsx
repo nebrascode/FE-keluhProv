@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import PropTypes from 'prop-types';
 
 const Content = ({ complaint }) => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -19,7 +20,7 @@ const Content = ({ complaint }) => {
         <div className="flex-1 mb-2 overflow-hidden rounded-lg">
           <img
             className="object-cover w-full h-full"
-            src={`https://storage.googleapis.com/e-complaint-assets/${complaint.files[currentImage].path}`}
+            src=""
             alt={`Gambar ${currentImage + 1}`}
           />
         </div>
@@ -35,7 +36,7 @@ const Content = ({ complaint }) => {
                 data-carousel-item
               >
                 <img
-                  src={`https://storage.googleapis.com/e-complaint-assets/${file.path}`}
+                  src=""
                   className="block w-full h-full object-contain cursor-pointer"
                   alt={`Gambar ${index + 1}`}
                   onClick={() => handleChange(index)}
@@ -153,6 +154,25 @@ const Content = ({ complaint }) => {
       </div>
     </>
   );
+};
+
+Content.propTypes = {
+  complaint: PropTypes.shape({
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        path: PropTypes.string.isRequired,
+      })
+    ).isRequired, // Tambahkan .isRequired untuk memastikan ada file
+    user: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    date: PropTypes.string.isRequired,
+    regency: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    address: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default Content;
